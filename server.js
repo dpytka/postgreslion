@@ -47,9 +47,18 @@ server.listen(port);
 var io = io.listen(server);
 io.sockets.on('connection', function (socket) {
   console.log('Client Connected');
-  socket.on('message', function (data) {
-    socket.broadcast.emit('server_message', data);
-    socket.emit('server_message', data);
+  socket.on('create_db', function (data) {
+    var dbData = {
+      url: 'postgres://username:password@host:5432/database',
+        name: 'database',
+      username: 'username',
+      password: 'password',
+      host: 'host',
+      port:'5432'
+    }
+
+    socket.broadcast.emit('database_created', dbData);
+    socket.emit('database_created', dbData);
   });
   socket.on('disconnect', function () {
     console.log('Client Disconnected.');
@@ -76,6 +85,14 @@ server.get('/', function (req, res) {
 
 server.get('/api', function (req, res) {
   res.send('postgres://username:password@host:5432/database');
+  io.sockets.emit('database_created', {
+    url: 'postgres://username:password@host:5432/database',
+    name: 'database',
+    username: 'username',
+    password: 'password',
+    host: 'host',
+    port:'5432'
+  });
 });
 
 
