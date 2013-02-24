@@ -2,6 +2,7 @@
 var connect = require('connect')
   , express = require('express')
   , io = require('socket.io')
+  , config = require('./config.example')
   , port = (process.env.PORT || 8081);
 
 //Setup Express
@@ -50,12 +51,12 @@ io.sockets.on('connection', function (socket) {
   socket.on('create_db', function (data) {
     var dbData = {
       url: 'postgres://username:password@host:5432/database',
-        name: 'database',
-      username: 'username',
-      password: 'password',
-      host: 'host',
-      port:'5432'
-    }
+      name: config.db.database,
+      username: config.db.username,
+      password: config.db.password,
+      host: config.db.host,
+      port: '5432'
+    };
 
     socket.broadcast.emit('database_created', dbData);
     socket.emit('database_created', dbData);
@@ -85,14 +86,16 @@ server.get('/', function (req, res) {
 
 server.get('/api', function (req, res) {
   res.send('postgres://username:password@host:5432/database');
-  io.sockets.emit('database_created', {
+  var dbData = {
     url: 'postgres://username:password@host:5432/database',
-    name: 'database',
-    username: 'username',
-    password: 'password',
-    host: 'host',
-    port:'5432'
-  });
+    name: config.db.database,
+    username: config.db.username,
+    password: config.db.password,
+    host: config.db.host,
+    port: '5432'
+  };
+
+  io.sockets.emit('database_created', dbData);
 });
 
 
