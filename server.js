@@ -2,7 +2,9 @@
 var connect = require('connect')
   , express = require('express')
   , io = require('socket.io')
-  , config = require('./config.example')
+  , pg = require('pg')
+  , config = require('./config')
+  , randomname = require('./randomname')
   , port = (process.env.PORT || 8081);
 
 //Setup Express
@@ -43,6 +45,11 @@ server.error(function (err, req, res, next) {
   }
 });
 server.listen(port);
+
+
+var client = new pg.Client(config.db.url);
+client.connect();
+
 
 //Setup Socket.IO
 var io = io.listen(server);
@@ -85,17 +92,21 @@ server.get('/', function (req, res) {
 });
 
 server.get('/api', function (req, res) {
-  res.send('postgres://username:password@host:5432/database');
-  var dbData = {
-    url: 'postgres://username:password@host:5432/database',
-    name: config.db.database,
-    username: config.db.username,
-    password: config.db.password,
-    host: config.db.host,
-    port: '5432'
-  };
+  var databaseName = randomname(8);
+  var query = client.query('CREATE DATABASE ' + databaseName + ' WITH OWNER = postgres');
+  query.on('end', function () {
+    res.send('postgres://username:password@host:5432/' + databaseName);
+    var dbData = {
+      url: 'postgres://username:password@host:5432/' + databaseName,
+      name: databaseName,
+      username: config.db.username,
+      password: config.db.password,
+      host: config.db.host,
+      port: '5432'
+    };
 
-  io.sockets.emit('database_created', dbData);
+    io.sockets.emit('database_created', dbData);
+  });
 });
 
 
