@@ -3,8 +3,8 @@ var connect = require('connect')
   , express = require('express')
   , io = require('socket.io')
   , pg = require('pg')
-  , config = require('./config')
-  , randomname = require('./randomname')
+  , config = require('./conf/config')
+  , randomname = require('./src/randomname')
   , port = (process.env.PORT || 8081);
 
 //Setup Express
