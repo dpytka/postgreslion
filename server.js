@@ -85,8 +85,7 @@ server.get('/', function (req, res) {
     locals: {
       title: 'Your Page Title',
       description: 'Your Page Description',
-      author: 'Your Name',
-      analyticssiteid: 'XXXXXXX'
+      author: 'Your Name'
     }
   });
 });
@@ -95,9 +94,9 @@ server.get('/api', function (req, res) {
   var databaseName = randomname(8);
   var query = client.query('CREATE DATABASE ' + databaseName + ' WITH OWNER = postgres');
   query.on('end', function () {
-    res.send('postgres://username:password@host:5432/' + databaseName);
+    var dbUrl = 'postgres://username:password@host:5432/' + databaseName;
     var dbData = {
-      url: 'postgres://username:password@host:5432/' + databaseName,
+      url: dbUrl,
       name: databaseName,
       username: config.db.username,
       password: config.db.password,
@@ -106,6 +105,7 @@ server.get('/api', function (req, res) {
     };
 
     io.sockets.emit('database_created', dbData);
+    res.send(dbUrl);
   });
 });
 
