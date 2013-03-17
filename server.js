@@ -1,76 +1,49 @@
 //setup Dependencies
 var connect = require('connect')
-  , express = require('express')
-  , io = require('socket.io')
-  , pg = require('pg')
-  , config = require('./conf/config')
-  , randomname = require('./src/randomname')
-  , port = (process.env.PORT || 8081);
+    , express = require('express')
+    , http = require('http')
+    , io = require('socket.io')
+    , pg = require('pg')
+    , config = require('./conf/config')
+    , randomname = require('./src/randomname')
+    , port = (process.env.PORT || 8081);
 
 //Setup Express
-var server = express.createServer();
-server.configure(function () {
-  server.set('views', __dirname + '/views');
-  server.set('view options', { layout: false });
-  server.use(connect.bodyParser());
-  server.use(express.cookieParser());
-  server.use(express.session({ secret: "shhhhhhhhh!"}));
-  server.use(connect.static(__dirname + '/static'));
-  server.use(server.router);
-});
+var app = express();
+app.set('views', __dirname + '/views');
+app.set('view options', { layout: false });
+app.use(express.bodyParser());
+app.use(express.cookieParser());
+app.use(express.session({ secret: "shhhhhhhhh!"}));
+app.use(connect.static(__dirname + '/static'));
+app.use(app.router);
+app.use(express.errorHandler());
 
-//setup the errors
-server.error(function (err, req, res, next) {
-  if (err instanceof NotFound) {
-    res.render('404.jade', {
-      locals: {
-        title: '404 - Not Found',
-        description: '',
-        author: '',
-        analyticssiteid: 'XXXXXXX'
-      },
-      status: 404
-    });
-  } else {
-    res.render('500.jade', {
-      locals: {
-        title: 'The Server Encountered an Error',
-        description: '',
-        author: '',
-        analyticssiteid: 'XXXXXXX',
-        error: err
-      },
-      status: 500
-    });
-  }
-});
-server.listen(port);
-
+var server = app.listen(port);
 
 var client = new pg.Client(config.db.url);
 client.connect();
 
-
 //Setup Socket.IO
 var io = io.listen(server);
 io.sockets.on('connection', function (socket) {
-  console.log('Client Connected');
-  socket.on('create_db', function (data) {
-    var dbData = {
-      url: 'postgres://username:password@host:5432/database',
-      name: config.db.database,
-      username: config.db.username,
-      password: config.db.password,
-      host: config.db.host,
-      port: '5432'
-    };
+    console.log('Client Connected');
+    socket.on('create_db', function (data) {
+        var dbData = {
+            url: 'postgres://username:password@host:5432/database',
+            name: config.db.database,
+            username: config.db.username,
+            password: config.db.password,
+            host: config.db.host,
+            port: '5432'
+        };
 
-    socket.broadcast.emit('database_created', dbData);
-    socket.emit('database_created', dbData);
-  });
-  socket.on('disconnect', function () {
-    console.log('Client Disconnected.');
-  });
+        socket.broadcast.emit('database_created', dbData);
+        socket.emit('database_created', dbData);
+    });
+    socket.on('disconnect', function () {
+        console.log('Client Disconnected.');
+    });
 });
 
 
@@ -80,51 +53,48 @@ io.sockets.on('connection', function (socket) {
 
 /////// ADD ALL YOUR ROUTES HERE  /////////
 
-server.get('/', function (req, res) {
-  res.render('index.jade', {
-    locals: {
-      title: 'Your Page Title',
-      description: 'Your Page Description',
-      author: 'Your Name'
-    }
-  });
+app.get('/', function (req, res) {
+    res.render('index.jade', {
+        title: 'Your Page Title',
+        description: 'Your Page Description',
+        author: 'Your Name'
+    });
 });
 
-server.get('/api', function (req, res) {
-  var databaseName = randomname(8);
-  var query = client.query('CREATE DATABASE ' + databaseName + ' WITH OWNER = postgres');
-  query.on('end', function () {
-    var dbUrl = 'postgres://username:password@host:5432/' + databaseName;
-    var dbData = {
-      url: dbUrl,
-      name: databaseName,
-      username: config.db.username,
-      password: config.db.password,
-      host: config.db.host,
-      port: '5432'
-    };
+app.get('/api', function (req, res) {
+    var databaseName = randomname(8);
+    var query = client.query('CREATE DATABASE ' + databaseName + ' WITH OWNER = postgres');
+    query.on('end', function () {
+        var dbUrl = 'postgres://username:password@host:5432/' + databaseName;
+        var dbData = {
+            url: dbUrl,
+            name: databaseName,
+            username: config.db.username,
+            password: config.db.password,
+            host: config.db.host,
+            port: '5432'
+        };
 
-    io.sockets.emit('database_created', dbData);
-    res.send(dbUrl);
-  });
+        io.sockets.emit('database_created', dbData);
+        res.send(dbUrl);
+    });
 });
 
 
 //A Route for Creating a 500 Error (Useful to keep around)
-server.get('/500', function (req, res) {
-  throw new Error('This is a 500 Error');
+app.get('/500', function (req, res) {
+    throw new Error('This is a 500 Error');
 });
 
 //The 404 Route (ALWAYS Keep this as the last route)
-server.get('/*', function (req, res) {
-  throw new NotFound;
+app.get('*', function (req, res) {
+    res.status(404);
+    res.render('404.jade', {
+            title: '404 - Not Found',
+            description: '',
+            author: ''
+        }
+    );
 });
-
-function NotFound(msg) {
-  this.name = 'NotFound';
-  Error.call(this, msg);
-  Error.captureStackTrace(this, arguments.callee);
-}
-
 
 console.log('Listening on http://0.0.0.0:' + port);
