@@ -2,7 +2,7 @@
 var connect = require('connect')
     , express = require('express')
     , http = require('http')
-    , io = require('socket.io')
+    , socketio = require('socket.io')
     , pg = require('pg')
     , config = require('./conf/config')
     , randomname = require('./src/randomname')
@@ -21,11 +21,8 @@ app.use(express.errorHandler());
 
 var server = app.listen(port);
 
-var client = new pg.Client(config.db.url);
-client.connect();
-
 //Setup Socket.IO
-var io = io.listen(server);
+var io = socketio.listen(server);
 io.sockets.on('connection', function (socket) {
     console.log('Client Connected');
     socket.on('create_db', function (data) {
@@ -46,13 +43,6 @@ io.sockets.on('connection', function (socket) {
     });
 });
 
-
-///////////////////////////////////////////
-//              Routes                   //
-///////////////////////////////////////////
-
-/////// ADD ALL YOUR ROUTES HERE  /////////
-
 app.get('/', function (req, res) {
     res.render('index.jade', {
         title: 'Your Page Title',
@@ -61,9 +51,15 @@ app.get('/', function (req, res) {
     });
 });
 
+var pgClient = new pg.Client(config.db.url);
+pgClient.connect();
 app.get('/api', function (req, res) {
     var databaseName = randomname(8);
-    var query = client.query('CREATE DATABASE ' + databaseName + ' WITH OWNER = postgres');
+    var createDbString = 'CREATE DATABASE ' + databaseName + ' WITH OWNER = postgres';
+    if(config.db.tablespace) {
+        createDbString += ' TABLESPACE ' + config.db.tablespace;
+    }
+    var query = pgClient.query(createDbString);
     query.on('end', function () {
         var dbUrl = 'postgres://username:password@host:5432/' + databaseName;
         var dbData = {
@@ -80,13 +76,6 @@ app.get('/api', function (req, res) {
     });
 });
 
-
-//A Route for Creating a 500 Error (Useful to keep around)
-app.get('/500', function (req, res) {
-    throw new Error('This is a 500 Error');
-});
-
-//The 404 Route (ALWAYS Keep this as the last route)
 app.get('*', function (req, res) {
     res.status(404);
     res.render('404.jade', {

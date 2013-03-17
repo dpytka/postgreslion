@@ -6,7 +6,7 @@
 //if IE 8
   html.no-js.ie8.oldie(lang='en') 
 //[if gt IE 8]><!
-html.no-js(lang='en')
+html.no-js(lang='en', ng-app)
   //<![end if]
   head
     meta(charset='utf-8')
@@ -25,10 +25,10 @@ html.no-js(lang='en')
     block footer
       footer
         script(src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js')
+        script(defer, src='/js/angular.js')
         script
           window.jQuery || document.write('<script src="js/libs/jquery-1.9.1.min.js"><\\/script>')
         //-script(defer, src='js/plugins.js')
-        script(defer, src='/js/script.js')
         script(defer, src='/socket.io/socket.io.js')
         //if lt IE 7
           script(defer, src='//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js')

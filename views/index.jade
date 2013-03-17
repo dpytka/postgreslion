@@ -2,5 +2,12 @@ extends layout
 
 block content
   div
-    a(id='sender')='Create new database'
-    ul(id='receiver')
+    div(ng-controller='DatabasesCtrl')
+      h2 Databases {{ dbs.length }}
+      form(ng-submit='addDb()')
+        input(class='btn-primary', type='submit', value='add')
+        ul
+          li(ng-repeat="db in dbs") {{db.url}}
+
+
+  script(defer, src='/js/databases.js')
