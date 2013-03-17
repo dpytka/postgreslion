@@ -4,17 +4,16 @@
   "author": "Dawid Pytka <dpytka@gmail.com>",
   "version": "0.0.1",
   "dependencies": {
-    "connect": "1.8.5",
-    "express": "2.5.2",
-    "jade": "0.20.0",
-    "mongoose": "2.4.8",
-    "socket.io": "0.8.7",
-    "pg": "0.12.3"
+    "connect": "1.9.2",
+    "express": "2.5.11",
+    "jade": "0.28.2",
+    "socket.io": "0.9.13",
+    "pg": "0.14.1"
   },
   "devDependencies": {
-    "vows": "0.5.x",
+    "vows": "0.7.x",
     "mocha": "*",
     "should": "*"
   },
-  "engine": "node >= 0.6.6"
+  "engine": "node >= 0.8.*"
 }
